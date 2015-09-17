@@ -91,6 +91,8 @@ results = [resultTube1 resultTube2 resultTube3 resultTube4 resultTube5 resultSub
 headers = {'Tube1', 'Tube2', 'Tube3', 'Tube4', 'Tube5', 'Subcu', 'Muscle', 'Noise'}; 
 
 %% Save Results
-print('../outputs-mri/t2-slice81.png', '-f1','-dpng')
-csvwrite_with_headers('../outputs-mri/t2-slice81.csv',results, headers)
+folder = ('2015-07-06_COLUCCI_PHANTOMS_MEAT'); 
+savePath = fullfile('../outputs', folder); 
+%print(fullfile(savePath, saveFilename), '-f1','-dpng')
+csvwrite_with_headers(fullfile(/Users/linacolucci/Documents/1Lab/Dialysis\ Study/Analysis/outputs/t),results, headers)
 
