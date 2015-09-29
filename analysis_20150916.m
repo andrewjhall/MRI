@@ -14,12 +14,12 @@ clear; close all;
 workingDirectory = pwd; 
 
 % *************************************************
-dir = ['/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Niftis/t2_map.nii']; % Path to image you want to analyze 
+dir = ['/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Niftis/m0_map_despot2.nii']; % Path to image you want to analyze 
 
-slice=81; % which slice # do you want to analyze? 
+slice=80; % which slice # do you want to analyze? 
 % ^WHY IS IT in slice 81 instead of 80 like it was created in?????????????
 
-saveFilename = sprintf('20150706-T2Map-Slice%d',slice); 
+saveFilename = sprintf('20150706-M0MapDESPOT2-Slice%d',slice); 
 
 % % set te array --> NEXT TIME CREATE A LOOP TO DO THIS
 % % delta_TE for shorter se_mc is 7.9ms
@@ -44,14 +44,14 @@ size_short = size(imageShortTE);
 nSlices_short = size_short(3);
 
 %% Load Masks
-mask_tube1 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/tube1_closest-to-skin.nii');
-mask_tube2 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/tube2.nii');
-mask_tube3 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/tube3.nii');
-mask_tube4 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/tube4.nii');
-mask_tube5 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/tube5_furthest-from-skin.nii');
-mask_noise = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/noise.nii');
-mask_subcu = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/subcu.nii');
-mask_muscle = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/muscle.nii');
+mask_tube1 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/map_slice80_tube1_closest-to-skin.nii');
+mask_tube2 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/map_slice80_tube2.nii');
+mask_tube3 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/map_slice80_tube3.nii');
+mask_tube4 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/map_slice80_tube4.nii');
+mask_tube5 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/map_slice80_tube5_furthest-from-skin.nii');
+mask_noise = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/map_slice80_noise.nii');
+mask_subcu = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/map_slice80_subcu.nii');
+mask_muscle = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/map_slice80_muscle.nii');
 
 %% Define ROIs (logicals)
 roi_tube1 = logical(mask_tube1.vol(:,:,slice));
@@ -91,6 +91,6 @@ results = [resultTube1 resultTube2 resultTube3 resultTube4 resultTube5 resultSub
 headers = {'Tube1', 'Tube2', 'Tube3', 'Tube4', 'Tube5', 'Subcu', 'Muscle', 'Noise'}; 
 
 %% Save Results
-print('../outputs-mri/t2-slice81.png', '-f1','-dpng')
-csvwrite_with_headers('../outputs-mri/t2-slice81.csv',results, headers)
+print('../outputs-mri/m0-despot2-slice80.png', '-f1','-dpng')
+csvwrite_with_headers('../outputs-mri/m0-despot2-slice80.csv',results, headers)
 
