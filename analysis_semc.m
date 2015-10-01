@@ -5,7 +5,7 @@
 %  an image, plots those means vs. TE (echo time array), and then performs
 %  a fitting on that decay curve to find the T2 relaxation time(s). 
 % 
-%  Take a 
+%    - Takes a long TE and a short TE sequence  
 %
 %
 %  EDITS
@@ -46,6 +46,10 @@ timept = 1; %which TE do you want to visualize?
 te_short = [8.6 17.2 25.8 34.4 43 51.6 60.2 68.8 77.4 86 94.6 103.2 111.8 120.4 129 137.6 146.2 154.8 163.4 172 180.6 189.2 197.8 206.4 215 223.6 232.2 240.8 249.4 258 266.6 275.2]; 
 te_long = [50:50:1600]; % 50ms increments from 50-1600ms. 
 
+% Where will results be saved? 
+savePath = '/Users/linacolucci/Documents/1Lab/Dialysis Study/Analysis/outputs-mri/semc';
+saveFilename = strcat(folderName(mriID),'.csv'); 
+
 %% -------------------------------------------------------------------- %%
 
 %% Add Freesurfer files to path
@@ -68,7 +72,6 @@ loadLongNifti = load_nifti(char(fullfile(pathNiftis(mriID), whichLong(mriID))));
 imageLong = loadLongNifti.vol; %image is located in 'vol' field
 sizeImageLong = size(imageLong); nSlicesLong = sizeImageLong(3);nTimePtsLong = sizeImageLong(4); %pull out dimensions
 
-
 %% Load Masks 
 %      Masks are 3D arrays of 0's and 1's that have a dimension (x,y,nSlices)
 %      Each row in the cell array 'masks' contains a different mask, they are
@@ -81,17 +84,6 @@ for ii=1:length(maskFiles)
     masks{ii} = tempLoad.vol; %cell array
 end
 
-
-%mask_tube1 = load_nifti('/Volumes/cimalab/lcolucci/MRI/20150919_COLUCCI_PHANTOMS/Masks/tubeC_slice3.nii');
-% mask_tube2 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/semc_slice1_tube2.nii');
-% mask_tube3 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/semc_slice1_tube3.nii');
-% mask_tube4 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/semc_slice1_tube4.nii');
-% mask_tube5 = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/semc_slice1_tube5_furthest-from-skin.nii');
-% mask_noise = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/semc_slice1_noise.nii');
-% mask_subcu = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/semc_slice1_subcu.nii');
-% mask_muscle = load_nifti('/Volumes/cimalab/lcolucci/MRI/2015-07-06_COLUCCI_PHANTOMS_MEAT/Masks/semc_slice1_muscle.nii');
-
-
 %% Define ROIs (logicals)
 %      Take masks from above and turn them into logicals just for our slice of interest
 %     'rois' is a cell array where each row contains the logical array for a particular mask. 
@@ -100,18 +92,6 @@ rois = cell(size(masks));
 for jj=1:length(rois)
     rois{jj} = logical(masks{jj}(:,:,slice)); %cell array of logical matrices
 end
-
-%roi_tube1 = logical(mask_tube1.vol(:,:,slice));
-% roi_tube2 = logical(mask_tube2.vol(:,:,slice));
-% roi_tube3 = logical(mask_tube3.vol(:,:,slice));
-% roi_tube4 = logical(mask_tube4.vol(:,:,slice));
-% roi_tube5 = logical(mask_tube5.vol(:,:,slice));
-% roi_noise = logical(mask_noise.vol(:,:,slice));
-% roi_subcu = logical(mask_subcu.vol(:,:,slice));
-% roi_muscle = logical(mask_muscle.vol(:,:,slice));
-
-rois = [roi_tube1]; %, 'roi_tube2','roi_tube3', 'roi_tube4', 'roi_tube5', 'roi_noise', 'roi_subcu', 'roi_muscle'}; % !!! Need to make rois a structure
-nROIs = length(rois); 
 
 %% Visualize Masks
 %  Show the slice we are analyzing with the ROIs on top
@@ -125,15 +105,6 @@ for kk=1:length(masks)
     contour(masks{kk}(:,:,slice),'r','Linewidth',1);
 end
 title('Image Overlaid with All Masks')
-
-%contour(squeeze(mask_tube1.vol(:,:,slice)), 'r','LineWidth',1); 
-% contour(squeeze(mask_tube2.vol(:,:,slice)), 'r','LineWidth',1);
-% contour(squeeze(mask_tube4.vol(:,:,slice)), 'r','LineWidth',1); 
-% contour(squeeze(mask_tube5.vol(:,:,slice)), 'r','LineWidth',1);
-% contour(squeeze(mask_tube3.vol(:,:,slice)), 'r','LineWidth',1);
-% contour(squeeze(mask_noise.vol(:,:,slice)), 'r','LineWidth',1);
-% contour(squeeze(mask_subcu.vol(:,:,slice)), 'r','LineWidth',1);
-% contour(squeeze(mask_muscle.vol(:,:,slice)), 'r','LineWidth',1);
 
 %% Calculate signal average for each ROI (Raw Results Matrix)
 %  Result is a matrix with nRows = # of TE time points, nColumns = # ROIs.
@@ -175,29 +146,34 @@ end
 
 % combine data from shorter and longer TEs
 te = [te_short, te_long]'; 
-means = [meansShort, meansLong];
-% te_union = sort(te_union); means_union = sort(means_union, 'descend'); 
+means = [meansShort; meansLong];
 
-% Exponential fitting of data
-%[fit_data,fresult,gof,out] = exponential_fit_no_offset_2exp([te_nopt1' means_nopt1']);
-teForFitting = repmat(te, 1, length(rois)); %analysis function needs a te column for each ROI. Repeat TE vector N times. 
+% Calculate noise
 noiseIndex = find(~cellfun(@isempty, strfind(maskFiles, 'noise'))); %use strmatch to find which mask is the noise mask file
                                                                     %use 'find' to find its index in the 'maskFiles' cell array                               
-noise = std(means(:,noiseIndex));
-[results1Exp, results2Exp, results3Exp] = analysisT2Decay(length(rois), teForFitting, means, 0, noise, [100 10], [1000 10 5 50], []);
+noise = std(means(:,noiseIndex)); %Noise = std deviation of noise voxel
+                                  %DOUBLE CHECK THIS!!!! Also try std deviation of the entire voxel (image[noise roi]), not just mean across different TEs
+                                  %Also compare to std deviation of noise floor of T2 decays
 
-for 
+% Perform 1-exp fitting 
+fittings = []; 
+for i=1:length(rois)
+    fittings(i,:) = createFit(te, means(:,i), [], noise); %Columns = [Amp, 95% CI of Amp, T2 (ms), 95% CI of T2, Rsquare, SSE, RMSE, SNR]
+end
 
-%% SNR calculation
+%% Print Results 
+% Prepare results into cell array
+columnHeader = [{'ROI'},{'Amp'}, {'95% Conf Int of A'}, {'T2 Relax Time'}, {'95% Conf Int of T2 Relax Time'} ,{'Rsquare'}, {'SSE'}, {'RMSE'}, {'SNR'}]; 
+description = sprintf('This is 1-exp fitting result for data from %s. Scans are: %s and %s. Masks come from: %s. Images are visualizations of time point %d.', ...
+    char(folderName(mriID)), char(scan001(mriID)), char(scan002(mriID)), char(pathSpecificMasks), timept); 
+result = cell(length(rois)+3, 9); 
+result{1,1}=description;
+result(3:end,:) = vertcat(columnHeader, horzcat(maskFiles', num2cell(fittings))); %result as cell array. ROI's as rows. Fitting results as column variables. 
 
-% Use this to manually define ROI regions instead of loading a mask
-% roi_sd = roipoly; 
-% roi_mean = roipoly;
+%Save
+cell2csv(char(fullfile(savePath, saveFilename)), result, ',')
 
-noise = std(squeeze(img1_te1(roi_noise)));
-signal_mean = mean(squeeze(img1_te1(roi1)));
-signal_max = max(squeeze(img1_te1(roi1)));
-sprintf('These are results for %s and slice %d', roi1name, slice) 
-snr_mean = signal_mean/noise
-snr_max = signal_max/noise
-
+%Other things to print to the .csv file later
+% - sequence parameters: TEs, TRs, resolution, FOV, etc.
+% - date that analysis was performed & by whom
+% - 
