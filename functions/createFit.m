@@ -1,4 +1,4 @@
-function [resultMatrix] = createFit(te, means, StartPoint, noise)
+function [resultMatrix, p] = createFit(te, means, StartPoint, noise)
 %CREATEFIT(TE,MEANS1)
 %  Create a fit.
 %
@@ -38,11 +38,12 @@ b_ci = fitresult.b - ci(1,2);
 % Plot fit with data.
 figure( 'Name', 'untitled fit 1' );
 h = plot( fitresult, xData, yData );
-legend( h, 'means1 vs. te', 'untitled fit 1', 'Location', 'NorthEast' );
+legend( h, 'MRI Data', '1-Exp Fit', 'Location', 'NorthEast' );
 % Label axes
-xlabel te
-ylabel means1
+xlabel('TE (ms)')
+ylabel('Amplitude (A.U.)')
 grid on
+p = gcf; 
 
 %Calculate SNR
 if ((~exist('noise','var') || isempty(noise))), SNR = ('No noise value provided. SNR calculation not possible.')

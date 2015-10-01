@@ -158,7 +158,10 @@ noise = std(means(:,noiseIndex)); %Noise = std deviation of noise voxel
 % Perform 1-exp fitting 
 fittings = []; 
 for i=1:length(rois)
-    fittings(i,:) = createFit(te, means(:,i), [], noise); %Columns = [Amp, 95% CI of Amp, T2 (ms), 95% CI of T2, Rsquare, SSE, RMSE, SNR]
+    [fittings(i,:), h] = createFit(te, means(:,i), [], noise); %Columns = [Amp, 95% CI of Amp, T2 (ms), 95% CI of T2, Rsquare, SSE, RMSE, SNR]
+    name = sprintf('%s',maskFiles{i}); 
+    title(sprintf('%s',name),'Interpreter','none')
+    print(h, '-dpng', fullfile(savePath, name))
 end
 
 %% Print Results 
