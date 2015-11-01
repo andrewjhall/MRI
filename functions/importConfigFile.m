@@ -1,4 +1,4 @@
-function [id,date1,folderName,goal,contents1,pathNiftis,pathMasks,nScans,scan001,scan002,scan003,scan004,scan005,scan006,scan007,scan008,scan010,scan011,scan012,scan013,scan014,scan015,scan016,scan017] = importConfigFile(filename, startRow, endRow)
+function [id,date1,folderName,goal,contents1,pathNiftis,pathMasks,scan001,scan002,scan003,scan004,scan005,scan006,scan007,scan008,scan010,scan011,scan012,scan013,scan014,scan015,scan016,scan017] = importConfigFile(filename, startRow, endRow)
 %IMPORTFILE Import numeric data from a text file as column vectors.
 %   [ID,DATE1,FOLDERNAME,GOAL,CONTENTS1,PATHNIFTIS,PATHMASKS,NSCANS,SCAN001,SCAN002,SCAN003,SCAN004,SCAN005,SCAN006,SCAN007,SCAN008,SCAN010,SCAN011,SCAN012,SCAN013,SCAN014,SCAN015,SCAN016,SCAN017]
 %   = IMPORTFILE(FILENAME) Reads data from text file FILENAME for the
@@ -88,9 +88,8 @@ end
 
 
 %% Split data into numeric and cell columns.
-rawNumericColumns = raw(:, [1,2,8]);
+rawNumericColumns = raw(:, [1,2]);
 rawCellColumns = raw(:, [3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]);
-
 
 %% Replace non-numeric cells with NaN
 R = cellfun(@(x) ~isnumeric(x) && ~islogical(x),rawNumericColumns); % Find non-numeric cells
@@ -104,7 +103,7 @@ goal = rawCellColumns(:, 2);
 contents1 = rawCellColumns(:, 3);
 pathNiftis = rawCellColumns(:, 4);
 pathMasks = rawCellColumns(:, 5);
-nScans = cell2mat(rawNumericColumns(:, 3));
+%nScans = cell2mat(rawNumericColumns(:, 3));
 scan001 = rawCellColumns(:, 6);
 scan002 = rawCellColumns(:, 7);
 scan003 = rawCellColumns(:, 8);
