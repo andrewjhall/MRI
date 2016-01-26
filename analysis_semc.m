@@ -29,17 +29,17 @@ workingDir = pwd;
 path(path, fullfile(workingDir, 'functions')); 
 % Import Config File 
 % ***!!!!*** Any time there are additional columns added to config.csv, this line must change ****
-[id,date,folderName,goal,contents1,pathNiftis,pathMasks,scan001,scan002,scan003,scan004,scan005,scan006,scan007,scan008,scan010,scan011,scan012,scan013,scan014,scan015,scan016,scan017] = importConfigFile('config.csv');
+[id,date,folderName,goal,contents1,pathNiftis,pathMasks,scan001,scan002,scan003,scan004,scan005,scan006,scan007,scan008,scan010,scan011,scan012,scan013,scan014,scan015,scan016,scan017] = importConfigFile('config_mri.csv');
 %MAYBE TURN THESE INTO A STRUCTURE config.[all these variables]
 
 %% ================================================================== %%
 %  ======================= USER INPUTS ==============================  %
 % Which MRI data do you want to analyze? (Enter in the ID number)
-mriID = 5; 
+mriID = 7; 
 
 % Which masks to use? (i.e. the folder in which all the masks of interest are located)
 % The script will analyze all masks within this folder 
-pathSpecificMasks = 'Leg'; 
+pathSpecificMasks = ''; 
 
 % Which se_mc scripts do you want to analyze? (Enter in their scan numbers, i.e. column headers on config.csv file)
 whichShort = scan003;
@@ -52,7 +52,7 @@ whichIntermed = scan003;
 %   NOT YET IMPLEMENTED[3 = both short/long + intermediate]
 whichAnalysis = 1; 
 
-slice=[2]; % which slice(s) # do you want to ANALYZE? 
+slice=[1:3]; % which slice(s) # do you want to ANALYZE? 
          % eg. 1, 6, 1:3, etc. 
          % REMEMBER! FSLView starts on slice 0 so I need to draw masks on layer 79 in FSL if I want slice 80, for example. 
 
@@ -61,9 +61,11 @@ sliceVis = 2; %which slice do you want to VISUALIZE?
 
 user = 'LAC'; %who is running this analysis? 
 
+save = 'No'; %'Yes' to save these results
+
 % set te arrays --> NEXT TIME DO THIS AUTOMATICALLY (PULL FROM DATA FILE). from info-dump
 te_short = [8:8:256];
-te_long = [50:50:1600]; % 50ms increments from 50-1600ms. 
+te_long = [25.5:25.5:816]; % 50ms increments from 50-1600ms. %25.5:25.5:816
 te_intermed = [10:10:320]; %10ms incredments from 10-320ms 
 %% ================================================================== %%
 
@@ -194,7 +196,7 @@ for j= 1:length(rois) %loop through each roi
                 clear tempImageIntermed %clear temp variable
             end
     end
-    clear tempROI % Clear temp variables
+    %clear tempROI % Clear temp variables
 end
 
 
@@ -272,21 +274,47 @@ result = cell(length(rois)+8, 9);
 result{1,1} = sprintf('This is 1-exp fitting result for data from %s.', mat2str(cell2mat((folderName(mriID))))); 
 switch whichAnalysis
     case 1
-        result{2,1} = sprintf('Scans are: %s and %s.', char(scan001(mriID)), char(scan002(mriID))); 
+        result{2,1} = sprintf('Scans are: %s and %s.', char(whichShort(mriID)), char(whichLong(mriID))); 
     case 2
-        result{2,1} = sprintf('Scans are: %s.', char(scan003(mriID))); 
+        result{2,1} = sprintf('Scans are: %s.', char(whichIntermed(mriID))); 
 end
 result{3,1} = sprintf('Masks come from: %s.', char(pathSpecificMasks)); 
 result{4,1} = sprintf('Images are visualizations of time point %d and slice %d.', timept, sliceVis); 
-result{5,1} = sprintf(strcat('The means array comes from analyzing slices: ',num2str(slice)))
+result{5,1} = sprintf(strcat('The means array comes from analyzing slices: ',num2str(slice)));
 result{6,1} = sprintf('Analysis run on %s by %s', datestr(now), user); 
 columnHeader = [{'ROI'},{'Amp'}, {'95% Conf Int of A'}, {'T2 Relax Time'}, {'95% Conf Int of T2 Relax Time'} ,{'Rsquare'}, {'SSE'}, {'RMSE'}, {'SNR'}]; 
-result(8:end,:) = vertcat(columnHeader, horzcat(maskFiles', num2cell(fittings))); %result as cell array. ROI's as rows. Fitting results as column variables. 
+maskFiles(noiseIndex) = []; %remove noise from 'maskFiles' since there is no fitting data for 'fittings' and cell arrays must match in size for the following row. 
+result(9:end,:) = vertcat(columnHeader, horzcat(maskFiles', num2cell(fittings))); %result as cell array. ROI's as rows. Fitting results as column variables. 
 
 %Save
-cell2csv(char(fullfile(savePath, saveFilename)), result, ',')
+switch save
+    case 'Yes'
+        cell2csv(char(fullfile(savePath, saveFilename)), result, ',')
+end
 
 %Other things to print to the .csv file later
 % - sequence parameters: TEs, TRs, resolution, FOV, etc.
 % - date that analysis was performed & by whom
 % - 
+
+%% IMPORT THE SE MEANS AND TE VARIABLES AND PLOT SEMC VS SE
+
+
+for i=1:length(rois)
+    if i == noiseIndex
+        continue
+    end
+    figure; 
+    plot(te, means(:,i),'bo'); hold on; plot(teSE, meansSE(:,i), 'r*')
+    name = sprintf('%s',strrep(maskFiles{i},'.nii','')); 
+    title(sprintf('%s',name),'Interpreter','none')    
+    legend('SEMC', 'SE')
+%     [fittings(i,:), h] = createFit(te, means(:,i), [800 100 0], noise); %Columns = [Amp, 95% CI of Amp, T2 (ms), 95% CI of T2, Rsquare, SSE, RMSE, SNR]
+%     name = sprintf('%s_slice%s',strrep(maskFiles{i},'.nii',''),num2str(slice)); 
+%     title(sprintf('%s',name),'Interpreter','none')
+    print('-dpng', fullfile(savePath, strcat('SEvsSEMC',name,'.jpeg')))
+end
+
+
+figure; plot(te, means(:,1)); hold on; plot(teSE, meansSE(:,1), 'r*')
+
