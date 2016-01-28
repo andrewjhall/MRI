@@ -19,7 +19,7 @@
 %  27 Oct 2015 - char() not working. Need mat2str(cell2mat()) instead. I removed nScans from importconfig function (was giving errors). 
 %  31 Oct 2015 - Added capability to analyze 1 slice or several at a time. Put slice # in the plot titles. Saved figure and .csv 
 %                results with slice # in their name. 
-
+%  28 Jan 2016 - Andrew Hall in here now
 
 
 % ------------ LOAD CONFIG AND SET UP ENVIRONMENT ----------------------
